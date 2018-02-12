@@ -63,6 +63,8 @@ _bfd_new_bfd (void)
   if (nbfd == NULL)
     return NULL;
 
+  nbfd->temp_filename = NULL;
+
   if (bfd_use_reserved_id)
     {
       nbfd->id = --bfd_reserved_id_counter;
@@ -128,6 +130,11 @@ _bfd_delete_bfd (bfd *abfd)
 
   if (abfd->filename)
     free ((char *) abfd->filename);
+  if (abfd->temp_filename)
+    {
+      remove (abfd->temp_filename);
+      free ((char *) abfd->temp_filename);
+    }
   free (abfd->arelt_data);
   free (abfd);
 }
@@ -173,8 +180,9 @@ DESCRIPTION
 	Open the file @var{filename} with the target @var{target}.
 	Return a pointer to the created BFD.  If @var{fd} is not -1,
 	then <<fdopen>> is used to open the file; otherwise, <<fopen>>
-	is used.  @var{mode} is passed directly to <<fopen>> or
-	<<fdopen>>.
+	is used. If @var{filename} is <<NULL>>, standard input is read
+	into a temporary file which is then opened.
+	@var{mode} is passed directly to <<fopen>> or <<fdopen>>.
 
 	Calls <<bfd_find_target>>, so @var{target} is interpreted as by
 	that function.
@@ -216,12 +224,53 @@ bfd_fopen (const char *filename, const char *target, const char *mode, int fd)
 
 #ifdef HAVE_FDOPEN
   if (fd != -1)
-    nbfd->iostream = fdopen (fd, mode);
+    {
+      nbfd->iostream = fdopen (fd, mode);
+    }
   else
 #endif
-    nbfd->iostream = _bfd_real_fopen (filename, mode);
+    {
+      if (filename)
+        {
+          nbfd->iostream = _bfd_real_fopen (filename, mode);
+        }
+      else /* slurp in stdin */
+        {
+          FILE *fp;
+          size_t nbytes;
+          char buffer[256];
+          nbfd->temp_filename = make_temp_file (NULL);
+          fp = _bfd_real_fopen (nbfd->temp_filename, "w");
+          if (!fp)
+            goto fopen_fail;
+
+          while ((nbytes = fread (buffer, 1, sizeof (buffer), stdin)) > 0)
+            {
+              if (fwrite (buffer, 1, nbytes, fp) != nbytes)
+                break;
+            }
+
+          if (ferror (fp) || ferror (stdin))
+            {
+              bfd_set_input_error (nbfd, bfd_error_on_input);
+              fclose (fp);
+              _bfd_delete_bfd (nbfd);
+              return NULL;
+            }
+
+          filename = "<stdin>";
+          nbfd->iostream = _bfd_real_fopen (nbfd->temp_filename, mode);
+          fclose (fp);
+          if (remove (nbfd->temp_filename) == 0)
+            {
+              free ((char *) nbfd->temp_filename);
+              nbfd->temp_filename = NULL;
+            }
+        }
+    }
   if (nbfd->iostream == NULL)
     {
+     fopen_fail:
       bfd_set_error (bfd_error_system_call);
       _bfd_delete_bfd (nbfd);
       return NULL;
@@ -269,7 +318,9 @@ SYNOPSIS
 
 DESCRIPTION
 	Open the file @var{filename} (using <<fopen>>) with the target
-	@var{target}.  Return a pointer to the created BFD.
+	@var{target}. If @var{filename} is <<NULL>>, standard input is
+	read into a temporary file which is then openend.
+	Return a pointer to the created BFD.
 
 	Calls <<bfd_find_target>>, so @var{target} is interpreted as by
 	that function.
@@ -304,8 +355,9 @@ SYNOPSIS
 
 DESCRIPTION
 	<<bfd_fdopenr>> is to <<bfd_fopenr>> much like <<fdopen>> is to
-	<<fopen>>.  It opens a BFD on a file already described by the
-	@var{fd} supplied.
+	<<fopen>>.  If @var{filename} is <<NULL>>, standard input is
+	read into a temporary file which is then openend.
+	It opens a BFD on a file already described by the @var{fd} supplied.
 
 	When the file is later <<bfd_close>>d, the file descriptor will
 	be closed.  If the caller desires that this file descriptor be

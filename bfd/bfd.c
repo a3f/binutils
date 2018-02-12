@@ -62,6 +62,9 @@ CODE_FRAGMENT
 .  {* The filename the application opened the BFD with.  *}
 .  const char *filename;
 .
+.  {* If non-NULL, name of a temporary file that can be removed on destruction.  *}
+.  const char *temp_filename;
+.
 .  {* A pointer to the target jump table.  *}
 .  const struct bfd_target *xvec;
 .
