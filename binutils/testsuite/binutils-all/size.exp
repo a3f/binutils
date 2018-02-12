@@ -29,25 +29,18 @@ if ![is_remote host] {
 
 send_user "Version [binutil_version $SIZE]"
 
+set dec "\[0-9\]+"
+set hex "\[0-9a-fA-F\]+"
 
-if {![binutils_assemble $srcdir/$subdir/bintest.s tmpdir/bintest.o]} then {
-    fail "size (assembling)"
-} else {
+proc test_size { testfile displayfile args} {
+    global SIZE
+    global SIZEFLAGS
+    global dec
+    global hex
 
-    if [is_remote host] {
-	set testfile [remote_download host tmpdir/bintest.o]
-    } else {
-	set testfile tmpdir/bintest.o
-    }
+    set got [binutils_run $SIZE "$SIZEFLAGS $testfile" $args]
 
-    set dec "\[0-9\]+"
-    set hex "\[0-9a-fA-F\]+"
-
-    # Test size with no arguments
-
-    set got [binutils_run $SIZE "$SIZEFLAGS $testfile"]
-
-    set want "($dec)\[ 	\]+($dec)\[ 	\]+($dec)\[ 	\]+($dec)\[ 	\]+($hex)\[ 	\]+${testfile}"
+    set want "($dec)\[ 	\]+($dec)\[ 	\]+($dec)\[ 	\]+($dec)\[ 	\]+($hex)\[ 	\]+${displayfile}"
 
     if ![regexp $want $got all text data bss dtot hextot] then {
 	fail "size (no arguments)"
@@ -56,11 +49,27 @@ if {![binutils_assemble $srcdir/$subdir/bintest.s tmpdir/bintest.o]} then {
 	    # The z80-coff port defaults to a "binary" like output
 	    # file format which does not include a data section.
 	    setup_xfail "z80-*-coff"
-	    fail "size (no arguments)"
+	    fail "size (no arguments) $displayfile"
 	} else {
-	    pass "size (no arguments)"
+	    pass "size (no arguments) $displayfile"
 	}
     }
+}
+
+if {![binutils_assemble $srcdir/$subdir/bintest.s tmpdir/bintest.o]} then {
+    fail "size (assembling)"
+} else {
+    if [is_remote host] {
+	set testfile [remote_download host tmpdir/bintest.o]
+    } else {
+	set testfile tmpdir/bintest.o
+    }
+
+    # Test size with no arguments
+    test_size $testfile $testfile
+
+    # Test size with no arguments, but reading from stdin
+    test_size "-" "<stdin>" $testfile
 
     # Test size -A
 

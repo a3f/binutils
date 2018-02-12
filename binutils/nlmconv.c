@@ -199,6 +199,7 @@ main (int argc, char **argv)
   int len;
   char *modname;
   char **matching;
+  bfd_boolean read_stdin = FALSE;
 
 #if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
   setlocale (LC_MESSAGES, "");
@@ -261,6 +262,8 @@ main (int argc, char **argv)
     {
       input_file = argv[optind];
       ++optind;
+      if (strcmp (input_file, "-") == 0)
+        read_stdin = TRUE;
       if (optind < argc)
 	{
 	  output_file = argv[optind];
@@ -329,7 +332,7 @@ main (int argc, char **argv)
       show_usage (stderr, 1);
     }
 
-  inbfd = bfd_openr (input_file, input_format);
+  inbfd = bfd_openr (read_stdin ? NULL : input_file, input_format);
   if (inbfd == NULL)
     bfd_fatal (input_file);
 

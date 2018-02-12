@@ -3420,9 +3420,15 @@ copy_file (const char *input_filename, const char *output_filename,
   bfd *ibfd;
   char **obj_matching;
   char **core_matching;
-  off_t size = get_file_size (input_filename);
+  off_t size;
+  const char *filename_bfd = input_filename;
 
-  if (size < 1)
+  if (strcmp (filename_bfd, "-") == 0)
+    {
+        filename_bfd = NULL;
+        input_filename = "<stdin>";
+    }
+  else if ((size = get_file_size (input_filename)) < 1)
     {
       if (size == 0)
 	non_fatal (_("error: the input file '%s' is empty"),
@@ -3433,7 +3439,7 @@ copy_file (const char *input_filename, const char *output_filename,
 
   /* To allow us to do "strip *" without dying on the first
      non-object file, failures are nonfatal.  */
-  ibfd = bfd_openr (input_filename, input_target);
+  ibfd = bfd_openr (filename_bfd, input_target);
   if (ibfd == NULL)
     {
       bfd_nonfatal_message (input_filename, NULL, NULL, NULL);
@@ -4685,6 +4691,7 @@ copy_main (int argc, char *argv[])
   bfd_boolean show_version = FALSE;
   bfd_boolean change_warn = TRUE;
   bfd_boolean formats_info = FALSE;
+  bfd_boolean read_stdin = FALSE;
   int c;
   struct stat statbuf;
   const bfd_arch_info_type *input_arch = NULL;
@@ -5393,6 +5400,8 @@ copy_main (int argc, char *argv[])
     copy_usage (stderr, 1);
 
   input_filename = argv[optind];
+  if (strcmp (input_filename, "-") == 0)
+      read_stdin = TRUE;
   if (optind + 1 < argc)
     output_filename = argv[optind + 1];
 
@@ -5459,9 +5468,13 @@ copy_main (int argc, char *argv[])
     }
 
   if (preserve_dates)
-    if (stat (input_filename, & statbuf) < 0)
-      fatal (_("warning: could not locate '%s'.  System error message: %s"),
-	     input_filename, strerror (errno));
+    {
+      if (read_stdin)
+        fatal (_("warning: can't preserve date of input: <stdin>"));
+      if (stat (input_filename, & statbuf) < 0)
+        fatal (_("warning: could not locate '%s'.  System error message: %s"),
+               input_filename, strerror (errno));
+    }
 
   /* If there is no destination file, or the source and destination files
      are the same, then create a temp and rename the result into the input.  */
@@ -5481,8 +5494,17 @@ copy_main (int argc, char *argv[])
       if (preserve_dates)
 	set_times (tmpname, &statbuf);
       if (tmpname != output_filename)
-	status = (smart_rename (tmpname, input_filename,
-				preserve_dates) != 0);
+        {
+          if (read_stdin)
+            {
+               /* Might be nifty to dump the object to stdout if no destination file was
+                * specified. This requires ensuring nothing else writes to stdout though */
+               unlink_if_ordinary (tmpname);
+               fatal (_("error: source file <stdin> can't be reused as destination file"));
+            }
+
+          status = (smart_rename (tmpname, input_filename, preserve_dates) != 0);
+       }
     }
   else
     unlink_if_ordinary (tmpname);

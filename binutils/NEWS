@@ -1,5 +1,8 @@
 -*- text -*-
 
+* Add ability to read from standard input if input file is `-' in dlltool,
+  nlmconv, nm, objcopy, objdump and size.
+
 Changes in 2.30:
 
 * Add --debug-dump=links option to readelf and --dwarf=links option to objdump

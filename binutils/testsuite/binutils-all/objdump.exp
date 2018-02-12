@@ -93,12 +93,12 @@ if { ![istarget "alpha-*-*"] || [is_elf_format] } then {
 
 # Test objdump -f
 
-proc test_objdump_f { testfile dumpfile } {
+proc test_objdump_f { testfile dumpfile args} {
     global OBJDUMP
     global OBJDUMPFLAGS
     global cpus_regex
 
-    set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -f $testfile"]
+    set got [binutils_run $OBJDUMP "$OBJDUMPFLAGS -f $testfile" $args]
 
     set want "$dumpfile:\[ 	\]*file format.*architecture:\[ 	\]*${cpus_regex}.*HAS_RELOC.*HAS_SYMS"
 
@@ -113,6 +113,10 @@ test_objdump_f $testfile $testfile
 if { [ remote_file host exists $testarchive ] } then {
     test_objdump_f $testarchive bintest2.o
 }
+
+# Test objdump -f -
+
+test_objdump_f "-" "<stdin>" $testfile
 
 # Test objdump -h
 

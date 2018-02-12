@@ -3758,14 +3758,20 @@ static void
 display_file (char *filename, char *target, bfd_boolean last_file)
 {
   bfd *file;
+  const char *filename_bfd = filename;
 
-  if (get_file_size (filename) < 1)
+  if (strcmp (filename_bfd, "-") == 0)
+    {
+      filename_bfd = NULL;
+      filename = "<stdin>";
+    }
+  else if (get_file_size (filename) < 1)
     {
       exit_status = 1;
       return;
     }
 
-  file = bfd_openr (filename, target);
+  file = bfd_openr (filename_bfd, target);
   if (file == NULL)
     {
       nonfatal (filename);

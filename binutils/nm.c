@@ -1299,11 +1299,19 @@ display_file (char *filename)
   bfd_boolean retval = TRUE;
   bfd *file;
   char **matching;
+  const char *filename_bfd = filename;
 
-  if (get_file_size (filename) < 1)
-    return FALSE;
+  if (strcmp (filename_bfd, "-") == 0)
+    {
+      filename_bfd= NULL;
+      filename = "<stdin>";
+    }
+  else if (get_file_size (filename) < 1)
+    {
+      return FALSE;
+    }
 
-  file = bfd_openr (filename, target ? target : plugin_target);
+  file = bfd_openr (filename_bfd, target ? target : plugin_target);
   if (file == NULL)
     {
       bfd_nonfatal (filename);

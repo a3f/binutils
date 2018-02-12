@@ -53,7 +53,7 @@ proc binutil_version { prog } {
 #	sets binutils_run_failed if the program does not exist
 #	sets binutils_run_status to the exit status of the program
 #
-proc default_binutils_run { prog progargs } {
+proc default_binutils_run { prog progargs args } {
     global binutils_run_failed
     global binutils_run_status
     global host_triplet
@@ -87,7 +87,8 @@ proc default_binutils_run { prog progargs } {
     # shell otherwise.
     regsub -all "\\$" "$progargs" "\\$" progargs
 
-    set state [remote_exec host $prog $progargs]
+    set state [remote_exec host $prog $progargs {*}$args]
+
     set binutils_run_status [lindex $state 0]
     set exec_output [prune_warnings [lindex $state 1]]
     if {![string match "" $exec_output]} then {

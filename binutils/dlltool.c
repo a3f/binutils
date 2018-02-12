@@ -1679,7 +1679,14 @@ scan_open_obj_file (bfd *abfd)
 static void
 scan_obj_file (const char *filename)
 {
-  bfd * f = bfd_openr (filename, 0);
+  bfd *f;
+  const char *filename_bfd = filename;
+  if (strcmp (filename_bfd, "-") == 0)
+    {
+      filename_bfd = NULL;
+      filename = "<stdin>";
+    }
+  f = bfd_openr (filename_bfd, 0);
 
   if (!f)
     /* xgettext:c-format */

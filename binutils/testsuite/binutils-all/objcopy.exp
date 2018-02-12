@@ -38,7 +38,7 @@ if ![is_remote host] {
 
 # Test that objcopy does not modify a file when copying it.
 
-proc objcopy_test {testname srcfile} {
+proc objcopy_test {testname srcfile args} {
     global OBJCOPY
     global OBJCOPYFLAGS
     global srcdir
@@ -46,13 +46,21 @@ proc objcopy_test {testname srcfile} {
     global tempfile
     global copyfile
 
+    if { [llength $args] == 0 } {
+	set objcopyfile "$tempfile"
+	set stdin ""
+    } else {
+	set objcopyfile "-"
+	set stdin "$tempfile"
+    }
+
     if {![binutils_assemble $srcdir/$subdir/${srcfile} $tempfile]} then {
 	unresolved "objcopy ($testname)"
 	remote_file host delete $tempfile
 	return
     }
 
-    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS $tempfile ${copyfile}.o"]
+    set got [binutils_run $OBJCOPY "$OBJCOPYFLAGS $objcopyfile ${copyfile}.o" $stdin]
 
     if ![string equal "" $got] then {
 	fail "objcopy ($testname)"
@@ -106,6 +114,7 @@ proc objcopy_test {testname srcfile} {
 }
 
 objcopy_test "simple copy" bintest.s
+objcopy_test "simple copy from stdin" bintest.s "use stdin"
 
 if { [file exists $tempfile] } {
     # Test reversing bytes in a section.

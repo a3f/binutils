@@ -114,8 +114,8 @@ if {[file isfile tmpdir/gas/as[exe_ext]]} then {
 #	sets binutils_run_failed if the program does not exist
 #	sets binutils_run_status to the exit status of the program
 #
-proc binutils_run { prog progargs } {
-    default_binutils_run $prog $progargs
+proc binutils_run { prog progargs args } {
+    default_binutils_run $prog $progargs {*}$args
 }
 
 #

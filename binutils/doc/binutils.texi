@@ -776,8 +776,9 @@ nm [@option{-A}|@option{-o}|@option{--print-file-name}] [@option{-a}|@option{--d
 
 @c man begin DESCRIPTION nm
 @sc{gnu} @command{nm} lists the symbols from object files @var{objfile}@dots{}.
-If no object files are listed as arguments, @command{nm} assumes the file
-@file{a.out}.
+If an @var{objfile} is a single dash (`-'), @command{nm} reads from the
+standard input.  If no object files are listed as arguments, @command{nm}
+assumes the file @file{a.out}.
 
 For each symbol, @command{nm} shows:
 
@@ -1248,9 +1249,11 @@ same endianness or which have no endianness (e.g., @samp{srec}).
 @item @var{infile}
 @itemx @var{outfile}
 The input and output files, respectively.
+If @var{infile} is a single dash (`-'), @command{objcopy} reads from the
+standard input.
 If you do not specify @var{outfile}, @command{objcopy} creates a
 temporary file and destructively renames the result with
-the name of @var{infile}.
+the name of @var{infile}, unless @var{infile} is `-'.
 
 @item -I @var{bfdname}
 @itemx --input-target=@var{bfdname}
@@ -2107,9 +2110,10 @@ information is mostly useful to programmers who are working on the
 compilation tools, as opposed to programmers who just want their
 program to compile and work.
 
-@var{objfile}@dots{} are the object files to be examined.  When you
-specify archives, @command{objdump} shows information on each of the member
-object files.
+@var{objfile}@dots{} are the object files to be examined.  If an @var{objfile}
+is a single dash (`-'), @command{objdump} reads from the standard input.
+When you specify archives, @command{objdump} shows information on each of the
+member object files.
 
 @c man end
 
@@ -2836,8 +2840,9 @@ size [@option{-A}|@option{-B}|@option{--format=}@var{compatibility}]
 
 The @sc{gnu} @command{size} utility lists the section sizes---and the total
 size---for each of the object or archive files @var{objfile} in its
-argument list.  By default, one line of output is generated for each
-object file or each module in an archive.
+argument list.  If an @var{objfile} is a single dash (`-'), @command{size}
+reads from the standard input.  By default, one line of output is generated
+for each object file or each module in an archive.
 
 @var{objfile}@dots{} are the object files to be examined.
 If none are specified, the file @code{a.out} will be used.
@@ -3734,11 +3739,12 @@ nlmconv [@option{-I} @var{bfdname}|@option{--input-target=}@var{bfdname}]
 
 @command{nlmconv} converts the relocatable @samp{i386} object file
 @var{infile} into the NetWare Loadable Module @var{outfile}, optionally
-reading @var{headerfile} for NLM header information.  For instructions
-on writing the NLM command file language used in header files, see the
-@samp{linkers} section, @samp{NLMLINK} in particular, of the @cite{NLM
-Development and Tools Overview}, which is part of the NLM Software
-Developer's Kit (``NLM SDK''), available from Novell, Inc.
+reading @var{headerfile} for NLM header information.  If @var{infile} is
+a single dash (`-'), @command{nlmconv} reads from the standard input.
+For instructions on writing the NLM command file language used in header
+files, see the @samp{linkers} section, @samp{NLMLINK} in particular,
+of the @cite{NLM Development and Tools Overview}, which is part of the
+NLM Software Developer's Kit (``NLM SDK''), available from Novell, Inc.
 @command{nlmconv} uses the @sc{gnu} Binary File Descriptor library to read
 @var{infile};
 @ifclear man
@@ -4214,7 +4220,9 @@ dlltool [@option{-d}|@option{--input-def} @var{def-file-name}]
 
 @command{dlltool} reads its inputs, which can come from the @option{-d} and
 @option{-b} options as well as object files specified on the command
-line.  It then processes these inputs and if the @option{-e} option has
+line.  If the @var{object-file} is a single dash (`-'), @command{dlltool}
+reads from the standard input.
+It then processes these inputs and if the @option{-e} option has
 been specified it creates a exports file.  If the @option{-l} option
 has been specified it creates a library file and if the @option{-z} option
 has been specified it creates a def file.  Any or all of the @option{-e},
